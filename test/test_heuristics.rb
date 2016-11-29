@@ -29,7 +29,11 @@ class TestHeuristcs < Minitest::Test
     hash.each do |language, blobs|
       Array(blobs).each do |blob|
         result = Heuristics.call(file_blob(blob), candidates)
-        assert_equal [Language[language]], result, "Failed for #{blob}"
+        if language.nil?
+          assert_equal [], result, "Failed for #{blob}"
+        else
+          assert_equal [Language[language]], result, "Failed for #{blob}"
+        end
       end
     end
   end
@@ -122,9 +126,12 @@ class TestHeuristcs < Minitest::Test
     })
   end
 
+  # Candidate languages = ["Assembly", "C++", "HTML", "PAWN", "PHP",
+  #                        "POV-Ray SDL", "Pascal", "SQL", "SourcePawn"]
   def test_inc_by_heuristics
     assert_heuristics({
-      "PHP" => all_fixtures("PHP", "*.inc")
+      "PHP" => all_fixtures("PHP", "*.inc"),
+      "POV-Ray SDL" => all_fixtures("POV-Ray SDL", "*.inc")
     })
   end
 
@@ -142,12 +149,32 @@ class TestHeuristcs < Minitest::Test
     })
   end
 
+  def test_m_by_heuristics
+    assert_heuristics({
+      "Objective-C" => all_fixtures("Objective-C", "*.m") - all_fixtures("Objective-C", "cocoa_monitor.m"),
+      "Mercury" => all_fixtures("Mercury", "*.m"),
+      "MUF" => all_fixtures("MUF", "*.m"),
+      "M" => all_fixtures("M", "MDB.m"),
+      "Mathematica" => all_fixtures("Mathematica", "*.m") - all_fixtures("Mathematica", "Problem12.m"),
+      "Matlab" => all_fixtures("Matlab", "create_ieee_paper_plots.m"),
+      "Limbo" => all_fixtures("Limbo", "*.m"),
+      nil => ["Objective-C/cocoa_monitor.m"]
+    })
+  end
+
+  def test_md_by_heuristics
+    assert_heuristics({
+      "Markdown" => all_fixtures("Markdown", "*.md"),
+      "GCC machine description" => all_fixtures("GCC machine description", "*.md")
+    })
+  end
+
   # Candidate languages = ["C++", "Objective-C"]
   def test_obj_c_by_heuristics
     # Only calling out '.h' filenames as these are the ones causing issues
     assert_heuristics({
       "Objective-C" => all_fixtures("Objective-C", "*.h"),
-      "C++" => ["C++/scanner.h", "C++/qscicommand.h", "C++/v8.h", "C++/gdsdbreader.h"],
+      "C++" => ["C++/scanner.h", "C++/protocol-buffer.pb.h", "C++/v8.h", "C++/gdsdbreader.h"],
       "C" => nil
     })
   end

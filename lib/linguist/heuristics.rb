@@ -144,10 +144,22 @@ module Linguist
       end
     end
 
-    disambiguate ".for", ".f" do |data|
+    fortran_rx = /^([c*][^abd-z]|      (subroutine|program|end|data)\s|\s*!)/i
+
+    disambiguate ".f" do |data|
       if /^: /.match(data)
         Language["Forth"]
-      elsif /^([c*][^abd-z]|      (subroutine|program|end)\s|\s*!)/i.match(data)
+      elsif data.include?("flowop")
+        Language["Filebench WML"]
+      elsif fortran_rx.match(data)
+        Language["FORTRAN"]
+      end
+    end
+
+    disambiguate ".for" do |data|
+      if /^: /.match(data)
+        Language["Forth"]
+      elsif fortran_rx.match(data)
         Language["FORTRAN"]
       end
     end
@@ -190,6 +202,8 @@ module Linguist
     disambiguate ".inc" do |data|
       if /^<\?(?:php)?/.match(data)
         Language["PHP"]
+      elsif /^\s*#(declare|local|macro|while)\s/.match(data)
+        Language["POV-Ray SDL"]
       end
     end
 
@@ -230,12 +244,20 @@ module Linguist
         Language["MUF"]
       elsif /^\s*;/.match(data)
         Language["M"]
-      elsif /^\s*\(\*/.match(data)
+      elsif /\*\)$/.match(data)
         Language["Mathematica"]
       elsif /^\s*%/.match(data)
         Language["Matlab"]
       elsif /^\w+\s*:\s*module\s*{/.match(data)
         Language["Limbo"]
+      end
+    end
+
+    disambiguate ".md" do |data|
+      if /(^[-a-z0-9=#!\*\[|])|<\//i.match(data) || data.empty?
+        Language["Markdown"]
+      elsif /^(;;|\(define_)/.match(data)
+        Language["GCC machine description"]
       end
     end
 
@@ -346,8 +368,16 @@ module Linguist
     disambiguate ".r" do |data|
       if /\bRebol\b/i.match(data)
         Language["Rebol"]
-      elsif data.include?("<-")
+      elsif /<-|^\s*#/.match(data)
         Language["R"]
+      end
+    end
+
+    disambiguate ".rno" do |data|
+      if /^\.!|^\.end lit(?:eral)?\b/i.match(data)
+        Language["RUNOFF"]
+      elsif /^\.\\" /.match(data)
+        Language["Groff"]
       end
     end
 
@@ -382,12 +412,18 @@ module Linguist
       elsif /(alter module)|(language sql)|(begin( NOT)+ atomic)/i.match(data)  || /signal SQLSTATE '[0-9]+'/i.match(data)
         #IBM db2
         Language["SQLPL"]
-      elsif /pragma|\$\$PLSQL_|XMLTYPE|sysdate|systimestamp|\.nextval|connect by|AUTHID (DEFINER|CURRENT_USER)/i.match(data) || /constructor\W+function/i.match(data)
+      elsif /\$\$PLSQL_|XMLTYPE|sysdate|systimestamp|\.nextval|connect by|AUTHID (DEFINER|CURRENT_USER)/i.match(data) || /constructor\W+function/i.match(data)
         #Oracle
         Language["PLSQL"]
       elsif ! /begin|boolean|package|exception/i.match(data)
         #Generic SQL
         Language["SQL"]
+      end
+    end
+    
+    disambiguate ".srt" do |data|
+      if /^(\d{2}:\d{2}:\d{2},\d{3})\s*(-->)\s*(\d{2}:\d{2}:\d{2},\d{3})$/.match(data)
+        Language["SubRip Text"]
       end
     end
     
@@ -408,7 +444,7 @@ module Linguist
     end
 
     disambiguate ".ts" do |data|
-      if data.include?("<TS ")
+      if data.include?("<TS")
         Language["XML"]
       else
         Language["TypeScript"]

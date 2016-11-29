@@ -3,15 +3,27 @@ require_relative "./helper"
 class TestFileBlob < Minitest::Test
   include Linguist
 
+  def silence_warnings
+    original_verbosity = $VERBOSE
+    $VERBOSE = nil
+    yield
+  ensure
+    $VERBOSE = original_verbosity
+  end
+
   def setup
-    # git blobs are normally loaded as ASCII-8BIT since they may contain data
-    # with arbitrary encoding not known ahead of time
-    @original_external = Encoding.default_external
-    Encoding.default_external = Encoding.find("ASCII-8BIT")
+    silence_warnings do
+      # git blobs are normally loaded as ASCII-8BIT since they may contain data
+      # with arbitrary encoding not known ahead of time
+      @original_external = Encoding.default_external
+      Encoding.default_external = Encoding.find("ASCII-8BIT")
+    end
   end
 
   def teardown
-    Encoding.default_external = @original_external
+    silence_warnings do
+      Encoding.default_external = @original_external
+    end
   end
 
   def script_blob(name)
@@ -305,7 +317,7 @@ class TestFileBlob < Minitest::Test
     assert sample_blob("some/vendored/path/Chart.js").vendored?
     assert !sample_blob("some/vendored/path/chart.js").vendored?
 
-    # Codemirror deps
+    # CodeMirror deps
     assert sample_blob("codemirror/mode/blah.js").vendored?
     assert sample_blob("codemirror/5.0/mode/blah.js").vendored?
 
@@ -410,6 +422,22 @@ class TestFileBlob < Minitest::Test
     assert sample_blob("public/javascripts/tiny_mce.js").vendored?
     assert sample_blob("public/javascripts/tiny_mce_popup.js").vendored?
     assert sample_blob("public/javascripts/tiny_mce_src.js").vendored?
+
+    # Ace Editor
+    assert sample_blob("ace-builds/src/ace.js").vendored?
+    assert sample_blob("static/project/ace-builds/src/ace.js").vendored?
+
+    # Fontello CSS files
+    assert sample_blob("fontello.css").vendored?
+    assert sample_blob("fontello-ie7.css").vendored?
+    assert sample_blob("fontello-codes.css").vendored?
+    assert sample_blob("fontello-codes-ie7.css").vendored?
+    assert sample_blob("fontello-embedded.css").vendored?
+    assert sample_blob("assets/css/fontello.css").vendored?
+    assert sample_blob("assets/css/fontello-ie7.css").vendored?
+    assert sample_blob("assets/css/fontello-codes.css").vendored?
+    assert sample_blob("assets/css/fontello-codes-ie7.css").vendored?
+    assert sample_blob("assets/css/fontello-embedded.css").vendored?
 
     # AngularJS
     assert sample_blob("public/javascripts/angular.js").vendored?
